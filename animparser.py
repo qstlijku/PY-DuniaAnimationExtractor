@@ -332,7 +332,7 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
 
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
-        MysteryShort = struct.unpack("<B", file.read(2))[0]
+        MysteryShort = struct.unpack("<H", file.read(2))[0]
         QuatCount = MysteryShort.bit_count()
         print("        " + str(QuatCount) + " quats stored afterwards")
 
