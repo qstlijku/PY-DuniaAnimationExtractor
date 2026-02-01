@@ -165,7 +165,7 @@ def GetMABSections(file):
 
     # Move the file pointer to the Section offset list
     file.seek(SECTIONOFFSETS_START, 0)
-
+    print("Section offsets start position: " + str(hex(file.tell())));
     # Get the Section sizes
     sections.UnknownSection2 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
     sections.UnknownSection1 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
@@ -238,6 +238,9 @@ def GetMeshBones(file):
 
             # Get the parent bone id
             parentid = struct.unpack("<l",file.read(4))[0]
+            
+            print("parentid: " + str(parentid));
+            print("current position: " + str(hex(file.tell())));
 
             # Skip a bunch of bytes we don't need
             if majorver == 46:
@@ -291,12 +294,16 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
     magicfloat = struct.unpack("<f", file.read(4))[0]
 
     # Get the last offset value
-    lastoffset = ((int(magicfloat*animlength_inseconds) >> 3)*4) + 8 
+    lastoffset = ((int(magicfloat*animlength_inseconds) >> 3)*4) + 8
+    
+    print("magicfloat: " + str(magicfloat));
+    print("lastoffset: " + str(hex(lastoffset)));
 
     # Get the section size (without padding)
     file.seek(sectionoffset + lastoffset + 4, 0)
+    print("Current position: " + str(hex(file.tell())));
     sectionsize_nopadding = struct.unpack("<i", file.read(4))[0]
-
+    print("Sectionsize_nopadding: " + str(hex(sectionsize_nopadding)));
     # Now get each subsection
     subsections = []
     curoffset = 0
@@ -304,7 +311,10 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
     while (curoffset < sectionsize_nopadding):
         kf = RotKeyFrameSection()
         kf.OffsetStart = struct.unpack("<i", file.read(4))[0]
-        kf.Size = struct.unpack("<i", file.read(4))[0] - kf.OffsetStart
+        print("OffsetStart: " + str(hex(kf.OffsetStart)));
+        size = struct.unpack("<i", file.read(4))[0]
+        print("Size: " + str(hex(size)));
+        kf.Size = size - kf.OffsetStart
         file.seek(-4, 1)
         subsections.append(kf)
         curoffset = kf.OffsetStart + kf.Size
@@ -313,15 +323,17 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
     print("\nQuaternion Keyframe Section: ")
     for s in subsections:
         print("    " + str(s))
-
+    print("Current position: " + str(hex(file.tell())));
     # Unpack the Quaternion data
     file.seek(sectionoffset, 0)
     frame = 0
     for kf in subsections:
         print("    Frame " + str(frame))
+        print("Current position: " + str(hex(file.tell())));
         file.seek(sectionoffset + kf.OffsetStart, 0)
-
+        print("Begin frame position: " + str(hex(file.tell())));
         # Read the first quaternion
+        print("first quat position: " + str(hex(file.tell())));
         FirstWord = struct.unpack("<H", file.read(2))[0]
         SecondWord = struct.unpack("<H", file.read(2))[0]
         ThirdWord = struct.unpack("<h", file.read(2))[0]
@@ -332,12 +344,19 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
 
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
-        MysteryShort = struct.unpack("<H", file.read(2))[0]
-        QuatCount = MysteryShort.bit_count()
+        print("mystery short position: " + str(hex(file.tell())));
+        #MysteryShort = struct.unpack("<H", file.read(2))[0]
+        #print("mystery short: " + str(hex(MysteryShort)));
+        #QuatCount = MysteryShort.bit_count()
+        QuatCount = 45
+        if (frame == 1):
+            QuatCount = 5
+            
         print("        " + str(QuatCount) + " quats stored afterwards")
 
         # Unpack all subsequent quaternions
         while (QuatCount > 0):
+            print("Next quat position: " + str(hex(file.tell())));
             FirstWord = struct.unpack("<H", file.read(2))[0]
             SecondWord = struct.unpack("<H", file.read(2))[0]
             ThirdWord = struct.unpack("<h", file.read(2))[0]
@@ -348,6 +367,7 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
             QuatCount -= 1
         frame += 1
+        print("End frame position: " + str(hex(file.tell())));
 
 def TestQuaternion(str):
     data = bytearray.fromhex(str)
@@ -403,7 +423,7 @@ def main():
     # Get the animation length
     fanim.seek(ANIMATIONLENGTH_START, 0)
     animlength_inseconds = struct.unpack("<f", fanim.read(4))[0]
-
+    print("Current position: " + str(hex(fanim.tell())));
     # Print stuff
     if (DEBUG):
         tobin = lambda x, count=16: "".join(map(lambda y:str((x>>y)&1), range(count-1, -1, -1)))
