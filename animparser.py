@@ -73,7 +73,7 @@ class RotKeyFrameSection:
     Size: int
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(start={hex(self.OffsetStart)}, size={self.Size})"
+        return f"{type(self).__name__}(start={hex(self.OffsetStart)}, size={self.Size}, sizeHex={hex(self.Size)})"
 
 class Quaternion:
     x: float
@@ -345,13 +345,13 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
 
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
         print("mystery short position: " + str(hex(file.tell())));
-        #MysteryShort = struct.unpack("<H", file.read(2))[0]
-        #print("mystery short: " + str(hex(MysteryShort)));
-        #QuatCount = MysteryShort.bit_count()
         QuatCount = 45
         if (frame == 1):
-            QuatCount = 5
-            
+            QuatCount = 6
+        if ("fan" in file.name):
+            MysteryShort = struct.unpack("<H", file.read(2))[0]
+            print("mystery short: " + str(hex(MysteryShort)));
+            QuatCount = MysteryShort.bit_count()
         print("        " + str(QuatCount) + " quats stored afterwards")
 
         # Unpack all subsequent quaternions
