@@ -345,7 +345,7 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
 
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
         print("mystery short position: " + str(hex(file.tell())));
-        QuatCount = kf.Size / 6
+        QuatCount = kf.Size / 6 - 1          # why is it minus 1?
         print("quat count: " + str(QuatCount));
         if ("fan" in file.name):
             MysteryShort = struct.unpack("<H", file.read(2))[0]
