@@ -354,8 +354,10 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
         print("        " + str(QuatCount) + " quats stored afterwards")
 
         # Unpack all subsequent quaternions
+        i = 1
         while (QuatCount > 0):
-            print("Next quat position: " + str(hex(file.tell())));
+            print("Quat num: " + str(i))
+            print("Quat position: " + str(hex(file.tell())));
             FirstWord = struct.unpack("<H", file.read(2))[0]
             SecondWord = struct.unpack("<H", file.read(2))[0]
             ThirdWord = struct.unpack("<h", file.read(2))[0]
@@ -365,6 +367,7 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             else:
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
             QuatCount -= 1
+            i += 1
         frame += 1
         print("End frame position: " + str(hex(file.tell())));
 
