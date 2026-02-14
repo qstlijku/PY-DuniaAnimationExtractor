@@ -286,9 +286,16 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
     """
 
     file.seek(sectionoffset, 0)
+    
+    print("Section offset: " + str(hex(file.tell())));
 
-    # Skip the first two WORDs
-    file.seek(2 + 2, 1)
+    NumBonesInAnim = struct.unpack("<H", file.read(2))[0]
+    UnkValue = struct.unpack("<H", file.read(2))[0]
+    
+    print("NumBonesInAnim: " + str(NumBonesInAnim));
+    print("UnkValue: " + str(hex(UnkValue)));
+    
+    print("Offset before magic float: " + str(hex(file.tell())));
 
     # Read the magic float value
     magicfloat = struct.unpack("<f", file.read(4))[0]
@@ -334,28 +341,39 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
         print("Begin frame position: " + str(hex(file.tell())));
         # Read the first quaternion
         print("first quat position: " + str(hex(file.tell())));
-        FirstWord = struct.unpack("<H", file.read(2))[0]
-        SecondWord = struct.unpack("<H", file.read(2))[0]
-        ThirdWord = struct.unpack("<h", file.read(2))[0]
-        quat = UnpackQuaternion(FirstWord, SecondWord, ThirdWord)
-        if not (quat == None):
-            print("        " + str(quat.euler()))
-        else:
-            print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
+        
+        TotalQuatCount = kf.Size / 6 - 1          # why is it minus 1?
+        print("total quat count: " + str(TotalQuatCount));
+        
+        i = 1
+        while (i <= NumBonesInAnim):
+            FirstWord = struct.unpack("<H", file.read(2))[0]
+            SecondWord = struct.unpack("<H", file.read(2))[0]
+            ThirdWord = struct.unpack("<h", file.read(2))[0]
+            quat = UnpackQuaternion(FirstWord, SecondWord, ThirdWord)
+            if not (quat == None):
+                print("        " + str(quat.euler()))
+            else:
+                print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
+            i += 1
 
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
-        print("mystery short position: " + str(hex(file.tell())));
-        QuatCount = kf.Size / 6 - 1          # why is it minus 1?
-        print("quat count: " + str(QuatCount));
-        if ("fan" in file.name):
-            MysteryShort = struct.unpack("<H", file.read(2))[0]
+        print("first mystery short position: " + str(hex(file.tell())));
+        i = 1
+        while (i <= NumBonesInAnim):
+            MysteryShort = struct.unpack("<B", file.read(1))[0]
             print("mystery short: " + str(hex(MysteryShort)));
             QuatCount = MysteryShort.bit_count()
-        print("        " + str(QuatCount) + " quats stored afterwards")
-
+            print("        " + str(QuatCount) + " quats stored afterwards")
+            i += 1
+        
+        if (NumBonesInAnim % 2 == 1):
+            MysteryShort = struct.unpack("<B", file.read(1))[0]
+            print("mystery short padding: " + str(hex(MysteryShort)));
+        print("last mystery short position: " + str(hex(file.tell())));
         # Unpack all subsequent quaternions
         i = 1
-        while (QuatCount > 0):
+        while (TotalQuatCount > 0):
             print("Quat num: " + str(i))
             print("Quat position: " + str(hex(file.tell())));
             FirstWord = struct.unpack("<H", file.read(2))[0]
@@ -366,10 +384,11 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
                 print("        " + str(quat.euler()))
             else:
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
-            QuatCount -= 1
+            TotalQuatCount -= 1
             i += 1
         frame += 1
         print("End frame position: " + str(hex(file.tell())));
+        return
 
 def TestQuaternion(str):
     data = bytearray.fromhex(str)
