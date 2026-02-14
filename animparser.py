@@ -388,7 +388,6 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             i += 1
         frame += 1
         print("End frame position: " + str(hex(file.tell())));
-        return
 
 def TestQuaternion(str):
     data = bytearray.fromhex(str)
