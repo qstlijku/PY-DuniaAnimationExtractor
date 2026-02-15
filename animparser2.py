@@ -17,8 +17,8 @@ DEBUG = True
 
 # Useful constants
 SKIP = 16
-ANIMATIONLENGTH_START = 196
-SECTIONOFFSETS_START = 200
+ANIMATIONLENGTH_START = 28
+SECTIONOFFSETS_START = 48
 
 
 """=============================
@@ -39,13 +39,13 @@ class MABOffsets:
 
     UnknownSection1: (int, int)
     UnknownSection2: (int, int)
-    Rotation: (int, int)
-    Keyframes: (int, int)
     UnknownSection3: (int, int)
-    Offsets: (int, int)
-    Events: (int, int)
     UnknownSection4: (int, int)
     UnknownSection5: (int, int)
+    Rotation: (int, int)
+    Keyframes: (int, int)
+    Offsets: (int, int)
+    Events: (int, int)
 
 class MeshBone:
     """
@@ -167,15 +167,15 @@ def GetMABSections(file):
     file.seek(SECTIONOFFSETS_START, 0)
     print("Section offsets start position: " + str(hex(file.tell())));
     # Get the Section sizes
-    sections.UnknownSection2 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
     sections.UnknownSection1 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
-    sections.Rotation =     (SKIP + struct.unpack("<i", file.read(4))[0], 0)
-    sections.Keyframes =    (SKIP + struct.unpack("<i", file.read(4))[0], 0)
+    sections.UnknownSection2 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
     sections.UnknownSection3 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
-    sections.Offsets =      (SKIP + struct.unpack("<i", file.read(4))[0], 0)
-    sections.Events =       (SKIP + struct.unpack("<i", file.read(4))[0], 0)
     sections.UnknownSection4 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
     sections.UnknownSection5 = (SKIP + struct.unpack("<i", file.read(4))[0], 0)
+    sections.Rotation =     (SKIP + struct.unpack("<i", file.read(4))[0], 0)
+    sections.Keyframes =    (SKIP + struct.unpack("<i", file.read(4))[0], 0)
+    sections.Offsets =      (SKIP + struct.unpack("<i", file.read(4))[0], 0)
+    sections.Events =       (SKIP + struct.unpack("<i", file.read(4))[0], 0)
 
     # Get the Section sizes
     sections.UnknownSection1 = (sections.UnknownSection1[0], sections.UnknownSection2[0] - sections.UnknownSection1[0])
@@ -440,7 +440,7 @@ def main():
         exit()
 
     # Ensure it's a valid MAB file that we know how to parse
-    GetMABVersion(fanim)
+    #GetMABVersion(fanim)
 
     # Get the file's Sections
     sections = GetMABSections(fanim)
@@ -455,13 +455,13 @@ def main():
         print("    Animation Length (In Seconds) - "+str(animlength_inseconds))
         print("    Unknown Section 1  - "+hex(sections.UnknownSection1[0])+","+str(sections.UnknownSection1[1]))
         print("    Unknown Section 2  - "+hex(sections.UnknownSection2[0])+","+str(sections.UnknownSection2[1]))
-        print("    Root Rotation      - "+hex(sections.Rotation[0])+","+str(sections.Rotation[1]))
-        print("    Rotation Keyframes - "+hex(sections.Keyframes[0])+","+str(sections.Keyframes[1]))
         print("    Unknown Section 3  - "+hex(sections.UnknownSection3[0])+","+str(sections.UnknownSection3[1]))
-        print("    Offset Animation   - "+hex(sections.Offsets[0])+","+str(sections.Offsets[1]))
-        print("    Events             - "+hex(sections.Events[0])+","+str(sections.Events[1]))
         print("    Unknown Section 4  - "+hex(sections.UnknownSection4[0])+","+str(sections.UnknownSection4[1]))
         print("    Unknown Section 5  - "+hex(sections.UnknownSection5[0])+","+str(sections.UnknownSection5[1]))
+        print("    Root Rotation      - "+hex(sections.Rotation[0])+","+str(sections.Rotation[1]))
+        print("    Rotation Keyframes - "+hex(sections.Keyframes[0])+","+str(sections.Keyframes[1]))
+        print("    Offset Animation   - "+hex(sections.Offsets[0])+","+str(sections.Offsets[1]))
+        print("    Events             - "+hex(sections.Events[0])+","+str(sections.Events[1]))
     
     # Get the bones list
     bones = GetMeshBones(fmesh)
