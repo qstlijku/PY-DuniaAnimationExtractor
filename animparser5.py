@@ -17,8 +17,8 @@ DEBUG = True
 
 # Useful constants
 SKIP = 16
-ANIMATIONLENGTH_START = 28
-SECTIONOFFSETS_START = 48
+ANIMATIONLENGTH_START = 40
+SECTIONOFFSETS_START = 68
 
 
 """=============================
@@ -279,6 +279,34 @@ def ParseSection_RootRotations(file, sectionoffset, animlength_inseconds, boneco
         quat = UnpackQuaternion(FirstWord, SecondWord, ThirdWord)
         rots.append(quat)
     return rots
+    
+def ParseSection_TestKeyframes(file, sectionoffset):
+    """
+    Parses the RotationKeyframes section of the MAB file
+    """
+
+    file.seek(sectionoffset, 0)
+    
+    print("Section offset: " + str(hex(file.tell())));
+
+    print("Current position: " + str(hex(file.tell())));
+    # Unpack the Quaternion data
+    file.seek(sectionoffset, 0)
+    i = 1
+    NumBonesInAnim = 50
+    while (i <= NumBonesInAnim):
+        print("Quat num: " + str(i))
+        print("Quat position: " + str(hex(file.tell())));
+        FirstWord = struct.unpack("<H", file.read(2))[0]
+        SecondWord = struct.unpack("<H", file.read(2))[0]
+        ThirdWord = struct.unpack("<h", file.read(2))[0]
+        quat = UnpackQuaternion(FirstWord, SecondWord, ThirdWord)
+        if not (quat == None):
+            print("        " + str(quat.euler()))
+        else:
+            print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
+        i += 1
+    return
 
 def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bonecount):
     """
@@ -455,14 +483,9 @@ def main():
         print("    Rotation Keyframes - "+hex(sections.Keyframes[0])+","+str(sections.Keyframes[1]))
         print("    Offset Animation   - "+hex(sections.Offsets[0])+","+str(sections.Offsets[1]))
         print("    Events             - "+hex(sections.Events[0])+","+str(sections.Events[1]))
-    
+        
     # Get the bones list
     bones = GetMeshBones(fmesh)
-    if (DEBUG):
-        print("\nBones:")
-        print("    " + str(len(bones)) + " bones")
-        for b in bones:
-            print("    " + str(b))
 
     # Parse the Root Rotation section
     rootrots = ParseSection_RootRotations(fanim, sections.Rotation[0], animlength_inseconds, len(bones))
@@ -472,8 +495,9 @@ def main():
         for q in rootrots:
             print("    " + str(q.euler()))
 
+    ParseSection_TestKeyframes(fanim, sections.UnknownSection5[0])
     # Parse the Rotation Keyframes section
-    ParseSection_RotationKeyframes(fanim, sections.Keyframes[0], animlength_inseconds, len(bones))
+    #ParseSection_RotationKeyframes(fanim, sections.Keyframes[0], animlength_inseconds, len(bones))
 
     # Close the files as we're done with them
     fanim.close()
