@@ -289,42 +289,32 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
     
     print("Section offset: " + str(hex(file.tell())));
 
-    NumBonesInAnim = struct.unpack("<H", file.read(2))[0]
-    UnkValue = struct.unpack("<H", file.read(2))[0]
+    NumSections = struct.unpack("<H", file.read(2))[0]
     
-    print("NumBonesInAnim: " + str(NumBonesInAnim));
-    print("UnkValue: " + str(hex(UnkValue)));
-    
-    print("Offset before magic float: " + str(hex(file.tell())));
-
-    # Read the magic float value
-    magicfloat = struct.unpack("<f", file.read(4))[0]
-
-    # Get the last offset value
-    lastoffset = ((int(magicfloat*animlength_inseconds) >> 3)*4) + 8
-    
-    print("magicfloat: " + str(magicfloat));
-    print("lastoffset: " + str(hex(lastoffset)));
+    print("NumSections: " + str(NumSections));
 
     # Get the section size (without padding)
-    file.seek(sectionoffset + lastoffset + 4, 0)
+    #file.seek(sectionoffset + lastoffset + 4, 0)
     print("Current position: " + str(hex(file.tell())));
-    sectionsize_nopadding = struct.unpack("<i", file.read(4))[0]
-    print("Sectionsize_nopadding: " + str(hex(sectionsize_nopadding)));
+    #sectionsize_nopadding = struct.unpack("<i", file.read(4))[0]
+    #print("Sectionsize_nopadding: " + str(hex(sectionsize_nopadding)));
     # Now get each subsection
     subsections = []
-    curoffset = 0
-    file.seek(sectionoffset + 8, 0)
-    while (curoffset < sectionsize_nopadding):
+    file.seek(-4, 1) # read first section again
+    i = 1
+    while (i < NumSections / 4):
         kf = RotKeyFrameSection()
-        kf.OffsetStart = struct.unpack("<i", file.read(4))[0]
+        file.seek(2, 1)
+        kf.OffsetStart = struct.unpack("<H", file.read(2))[0]
         print("OffsetStart: " + str(hex(kf.OffsetStart)));
-        size = struct.unpack("<i", file.read(4))[0]
+        file.seek(2, 1)
+        size = struct.unpack("<H", file.read(2))[0]
         print("Size: " + str(hex(size)));
         kf.Size = size - kf.OffsetStart
         file.seek(-4, 1)
         subsections.append(kf)
         curoffset = kf.OffsetStart + kf.Size
+        i += 1
 
     # Show the sections
     print("\nQuaternion Keyframe Section: ")
@@ -343,9 +333,11 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
         print("first quat position: " + str(hex(file.tell())));
         
         print("total section size: " + str(hex(kf.Size)));
-        
         i = 1
+        NumBonesInAnim = 50
         while (i <= NumBonesInAnim):
+            print("Quat num: " + str(i))
+            print("Quat position: " + str(hex(file.tell())));
             FirstWord = struct.unpack("<H", file.read(2))[0]
             SecondWord = struct.unpack("<H", file.read(2))[0]
             ThirdWord = struct.unpack("<h", file.read(2))[0]
@@ -355,7 +347,8 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             else:
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
             i += 1
-
+            file.seek(-4, 1)
+        return
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
         print("first mystery short position: " + str(hex(file.tell())));
         i = 1
