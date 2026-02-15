@@ -372,8 +372,8 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
             print("mystery short padding: " + str(hex(MysteryShort)));
         print("last mystery short position: " + str(hex(file.tell())));
         # Unpack all subsequent quaternions
-        i = 1
-        while (TotalQuatCount > 0):
+        i = NumBonesInAnim
+        while (i < TotalQuatCount):
             print("Quat num: " + str(i))
             print("Quat position: " + str(hex(file.tell())));
             FirstWord = struct.unpack("<H", file.read(2))[0]
@@ -384,7 +384,6 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
                 print("        " + str(quat.euler()))
             else:
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
-            TotalQuatCount -= 1
             i += 1
         frame += 1
         print("End frame position: " + str(hex(file.tell())));
