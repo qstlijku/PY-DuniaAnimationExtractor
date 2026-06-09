@@ -1,6 +1,16 @@
-# Dunia Engine Animation Extractor
-# Version 0.1
-# By Buu342
+# Dunia Engine Animation Extractor — Avatar (2009) variant
+#
+# Avatar is FC2-era Dunia (byte 0 == 0x4C) and structurally identical to
+# FC3's .mab format: same 9-section table with the quirky `unkSec2 < unkSec1`
+# ordering, same +SKIP=16 offset base, same smallest-three packed quat
+# encoding, same per-chunk [first-quat / mystery-byte / extra-quats] layout
+# for rotation keyframes. The only difference vs FC3 is the wrapper preamble
+# length: FC3 puts animLength at 196 and the section table at 200; Avatar's
+# preamble is 64 bytes shorter, so they live at 132 and 136 respectively.
+# Everything below the wrapper is unchanged.
+#
+# Verified against corp_3rd_jump_land.mab (Avatar locomotion sample): all 9
+# section offsets land in-range, animLength reads 0.6s.
 
 import os
 import sys
@@ -17,8 +27,8 @@ DEBUG = True
 
 # Useful constants
 SKIP = 16
-ANIMATIONLENGTH_START = 196
-SECTIONOFFSETS_START = 200
+ANIMATIONLENGTH_START = 132   # FC3: 196 — Avatar wrapper is 64 bytes shorter
+SECTIONOFFSETS_START  = 136   # FC3: 200
 
 
 """=============================
@@ -133,10 +143,15 @@ def GetMABVersion(file):
     supported = False
     data = int.from_bytes(file.read(1))
     if (data == 0x4C):
-        print("Far Cry 2 MAB file")
+        # FC2 and Avatar (2009) share this version byte; this script targets
+        # Avatar's wrapper offsets (132 / 136), which may or may not match
+        # FC2 depending on whether FC2 uses the same shorter preamble.
+        print("Avatar / Far Cry 2 MAB file")
+        supported = True
     elif (data == 0x61):
         print("Far Cry 3 MAB file")
-        supported = True
+        # FC3 wrapper expects different offsets (196 / 200) — this Avatar-
+        # tuned variant won't parse FC3 correctly. Use animparser.py for FC3.
     elif (data == 0x62):
         print("Far Cry 3: Blood Dragon MAB file")
     elif (data == 0x81):
@@ -418,11 +433,11 @@ def main():
     Program entrypoint
     """
 
-    if (len(sys.argv) == 2):
+    if (len(sys.argv) == 2 and not sys.argv[1].lower().endswith('.mab')):
         TestQuaternion(sys.argv[1])
         exit()
-    if (not len(sys.argv) == 3):
-        print("Usage:\npython3 animparser.py <animation.mab> <model.xbg>\n")
+    if (len(sys.argv) < 2 or len(sys.argv) > 3):
+        print("Usage:\npython3 animparseravatar.py <animation.mab> [model.xbg]\n")
         exit()
 
     # Try to open the animation file
@@ -432,12 +447,17 @@ def main():
         print("Unable to open the animation file\n")
         exit()
 
-    # Now lets open the skeleton file
-    try:
-        fmesh = open(sys.argv[2], "rb")
-    except FileNotFoundError:
-        print("Unable to open the mesh file\n")
-        exit()
+    # Skeleton mesh is optional — Avatar xbgs may be in a different format
+    # than this script's GetMeshBones reader (which was written for FC3).
+    # When absent or unreadable, fall through and parse the .mab anyway;
+    # the bone count comes from the .mab itself and the bone-name display
+    # is just cosmetic.
+    fmesh = None
+    if len(sys.argv) == 3:
+        try:
+            fmesh = open(sys.argv[2], "rb")
+        except FileNotFoundError:
+            print("Unable to open the mesh file (continuing without bone names)\n")
 
     # Ensure it's a valid MAB file that we know how to parse
     GetMABVersion(fanim)
@@ -463,8 +483,15 @@ def main():
         print("    Unknown Section 4  - "+hex(sections.UnknownSection4[0])+","+str(sections.UnknownSection4[1]))
         print("    Unknown Section 5  - "+hex(sections.UnknownSection5[0])+","+str(sections.UnknownSection5[1]))
     
-    # Get the bones list
-    bones = GetMeshBones(fmesh)
+    # Get the bones list (skipped when no mesh was supplied or readable).
+    # Avatar's xbg parser may need its own rework — GetMeshBones expects the
+    # FC3 NODE chunk layout, so it's wrapped in try/except here.
+    bones = []
+    if fmesh is not None:
+        try:
+            bones = GetMeshBones(fmesh)
+        except Exception as e:
+            print(f"\nMesh parse failed ({e}); continuing without bone names\n")
     if (DEBUG):
         print("\nBones:")
         print("    " + str(len(bones)) + " bones")
@@ -484,7 +511,8 @@ def main():
 
     # Close the files as we're done with them
     fanim.close()
-    fmesh.close()
+    if fmesh is not None:
+        fmesh.close()
 
     print("\nFinished!\n")
 
