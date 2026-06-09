@@ -3,12 +3,10 @@ FSkip(32);
 
 uint32 signature;
 uint sectionLength;
-
-float unk;
-
 float ClipLength;
+float FrameRate;
 
-ushort count0;
+ushort numBonesInAnim;
 ushort unk0;
 ushort unk1;
 ushort unk2;
@@ -21,7 +19,9 @@ ushort pad2;
 typedef struct {
     uint sectionLength;
     float ClipLength;
-    ushort count0;
+    float FrameRate;
+    
+    ushort numBonesInAnim;
     ushort unk0;
     ushort unk1;
     ushort unk2;
@@ -37,11 +37,11 @@ typedef struct {
         ushort frameCount;
         ushort zero;
     struct {
-        for (i = 0; i < count0; i++)
+        for (i = 0; i < numBonesInAnim; i++)
             uint unkArrayB;
     } boneHashes;
     struct {
-        for (i = 0; i < count0; i++)
+        for (i = 0; i < numBonesInAnim; i++)
             ubyte unkArrayD;
     } unkArrayD;
     FSeek(FTell() + (4 - (FTell() % 4)) % 4);
@@ -218,11 +218,11 @@ float pad;
     ushort frameCount;
     ushort zero;
 struct {
-    for (i = 0; i < count0; i++)
+    for (i = 0; i < numBonesInAnim; i++)
         uint unkArrayB;
 } boneHashes;
 struct {
-    for (i = 0; i < count0; i++)
+    for (i = 0; i < numBonesInAnim; i++)
         ubyte unkArrayD;
 } unkArrayD;
 FSeek(FTell() + (4 - (FTell() % 4)) % 4);

@@ -293,8 +293,8 @@ def ParseSection_TestKeyframes(file, sectionoffset):
     # Unpack the Quaternion data
     file.seek(sectionoffset, 0)
     i = 1
-    NumBonesInAnim = 50
-    while (i <= NumBonesInAnim):
+    TestNum = 32
+    while (i <= TestNum):
         print("Quat num: " + str(i))
         print("Quat position: " + str(hex(file.tell())));
         FirstWord = struct.unpack("<H", file.read(2))[0]
@@ -362,7 +362,9 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
         
         print("total section size: " + str(hex(kf.Size)));
         i = 1
-        NumBonesInAnim = 100
+        NumBonesInAnim = kf.Size
+        #NumBonesInAnim = 100
+        #file.seek(5, 1)
         while (i <= NumBonesInAnim):
             print("Quat num: " + str(i))
             print("Quat position: " + str(hex(file.tell())));
@@ -376,7 +378,7 @@ def ParseSection_RotationKeyframes(file, sectionoffset, animlength_inseconds, bo
                 print("        Bad quat at " + hex(file.tell() - sectionoffset - 6))
             i += 1
             file.seek(-5, 1)
-        return
+        continue
         # Read the mystery short and count the number of 1's, which corresponds to the number of quaternions stored afterwards
         print("first mystery short position: " + str(hex(file.tell())));
         i = 1
@@ -495,9 +497,9 @@ def main():
         for q in rootrots:
             print("    " + str(q.euler()))
 
-    ParseSection_TestKeyframes(fanim, sections.UnknownSection5[0])
+    #ParseSection_TestKeyframes(fanim, sections.UnknownSection5[0])
     # Parse the Rotation Keyframes section
-    #ParseSection_RotationKeyframes(fanim, sections.Keyframes[0], animlength_inseconds, len(bones))
+    ParseSection_RotationKeyframes(fanim, sections.Keyframes[0], animlength_inseconds, len(bones))
 
     # Close the files as we're done with them
     fanim.close()
